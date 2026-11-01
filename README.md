@@ -1,5 +1,7 @@
 # 🎓 Students Database CRUD Application (+ Local AI Extension)
-**Python Backend Development Internship Project | EWB EDU TECH PVT. LTD.**
+**Python Backend Development Project**
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/liki123-26/students-database-crud)
 
 An enterprise-ready RESTful API backend engineered with **FastAPI** and **SQLite** for managing student records. This project implements complete **Create, Read, Update, and Delete (CRUD)** operations, strict schema validation using **Pydantic v2**, robust error handling, automated testing with **Pytest**, and an **Optional Local AI Extension powered by Ollama (Llama 3.2)** with grounded record retrieval and offline fallback.
 
