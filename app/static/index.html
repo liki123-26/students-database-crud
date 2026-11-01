@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students Database CRUD & AI Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #060913;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Interactive Background Canvas */
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Ambient Glowing Orbs */
+    .ambient-glow-1 {
+      position: fixed;
+      top: -15%;
+      left: 10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatSlow 18s ease-in-out infinite alternate;
+    }
+    .ambient-glow-2 {
+      position: fixed;
+      bottom: -15%;
+      right: 5%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(168, 85, 247, 0) 70%);
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatSlow 22s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes floatSlow {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(40px) scale(1.08); }
+    }
+
+    /* Glassmorphism Classes */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .glass-panel-interactive {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-panel-interactive:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px -12px rgba(99, 102, 241, 0.18);
+    }
+
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
+  </style>
+</head>
+<body class="relative min-h-screen">
+
+  <!-- Interactive Canvas Background -->
+  <canvas id="particleCanvas"></canvas>
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <!-- Main Container -->
+  <div class="relative z-10 flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="glass-panel border-b border-slate-800/80 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-5 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        
+        <!-- Logo / Brand -->
+        <div class="flex items-center space-x-3.5">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+            <i class="fa-solid fa-graduation-cap text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg font-bold tracking-tight text-white">Student Records CRUD Studio</h1>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                v1.0.0
+              </span>
+            </div>
+            <p class="text-xs text-slate-400">Python FastAPI + SQLite Persistent Backend</p>
+          </div>
+        </div>
+
+        <!-- Action Links & Swagger Buttons -->
+        <div class="flex items-center flex-wrap gap-2.5">
+          <a href="/docs" target="_blank" class="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 border border-slate-700/80 flex items-center gap-2 transition shadow-sm">
+            <i class="fa-solid fa-code text-indigo-400"></i> Interactive Swagger UI
+          </a>
+          <a href="/redoc" target="_blank" class="px-3.5 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-slate-200 border border-slate-700/80 flex items-center gap-2 transition shadow-sm">
+            <i class="fa-solid fa-book text-purple-400"></i> ReDoc Spec
+          </a>
+          <button onclick="openModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-xs font-bold text-slate-950 flex items-center gap-2 transition shadow-lg shadow-emerald-500/20">
+            <i class="fa-solid fa-user-plus"></i> Add New Student
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="max-w-7xl mx-auto px-5 py-6 space-y-6 flex-1 w-full">
+
+      <!-- Metrics KPI Grid (Interactive Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Students -->
+        <div onclick="openKpiModal('students')" class="glass-panel-interactive p-4 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-indigo-500/60 transition" title="Click to view student enrollment details">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Enrolled</p>
+              <h3 id="statTotal" class="text-3xl font-extrabold text-white mt-1">--</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-users"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-emerald-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> SQLite Persistent
+            </span>
+            <span class="text-indigo-400 font-semibold group-hover:translate-x-0.5 transition">View details &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Total Courses -->
+        <div onclick="openKpiModal('courses')" class="glass-panel-interactive p-4 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-purple-500/60 transition" title="Click to view course distribution">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active Courses</p>
+              <h3 id="statCourses" class="text-3xl font-extrabold text-white mt-1">--</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-layer-group"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-diagram-project text-[9px] text-purple-400"></i> Breakdown
+            </span>
+            <span class="text-purple-400 font-semibold group-hover:translate-x-0.5 transition">View courses &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Backend Health -->
+        <div onclick="openKpiModal('server')" class="glass-panel-interactive p-4 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-emerald-500/60 transition" title="Click to view backend architecture & endpoints">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">REST API Server</p>
+              <h3 class="text-xl font-bold text-white mt-1 flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                FastAPI Live
+              </h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-server"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-[9px] text-emerald-400"></i> SQLAlchemy 2.0
+            </span>
+            <span class="text-emerald-400 font-semibold group-hover:translate-x-0.5 transition">View specs &rarr;</span>
+          </div>
+        </div>
+
+        <!-- AI Assistant Status -->
+        <div onclick="openKpiModal('ai')" class="glass-panel-interactive p-4 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-cyan-500/60 transition" title="Click to view Ollama AI connection & diagnostics">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">AI Extension (Ollama)</p>
+              <h3 id="aiStatusBadge" class="text-sm font-bold text-slate-300 mt-1">Checking status...</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px]">
+            <span class="text-cyan-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-[9px]"></i> Grounded Mode
+            </span>
+            <span class="text-cyan-400 font-semibold group-hover:translate-x-0.5 transition">Diagnostics &rarr;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Natural Language Command Console (Bonus Feature) -->
+      <div class="glass-panel p-6 rounded-3xl relative overflow-hidden border border-indigo-500/20">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                Local AI Intelligence Engine
+                <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30">
+                  Optional Bonus
+                </span>
+              </h2>
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-database text-indigo-400 text-[10px]"></i>
+            Context dynamically grounded on live SQLite records
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400 mb-4">
+          Ask questions in plain English. The backend securely retrieves matching SQLite records and formulates an accurate answer using Ollama (or the built-in grounded fallback engine).
+        </p>
+
+        <!-- Search Input Bar -->
+        <form id="aiForm" onsubmit="askAI(event)" class="flex flex-col sm:flex-row gap-2.5">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-comment-dots absolute left-3.5 top-3.5 text-indigo-400/60 text-sm"></i>
+            <input
+              id="aiInput"
+              type="text"
+              placeholder="E.g., How many students are there? OR List students born after 2005."
+              class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900/90 text-white placeholder-slate-500 text-xs sm:text-sm border border-slate-700/80 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition shadow-inner"
+              required
+            />
+          </div>
+          <button type="submit" id="aiBtn" class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 font-bold text-xs sm:text-sm text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition">
+            <span>Query Database</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </form>
+
+        <!-- Suggested Question Chips -->
+        <div class="flex flex-wrap items-center gap-2 mt-3.5 text-xs">
+          <span class="text-slate-400 text-[11px] font-medium mr-1">Quick Prompts:</span>
+          <button onclick="setAndAsk('How many students are there?')" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-950/60 hover:border-indigo-500/40 text-slate-300 text-[11px] border border-slate-700/60 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-calculator text-[9px] text-indigo-400"></i> "How many students are there?"
+          </button>
+          <button onclick="setAndAsk('List students born after 2005.')" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-950/60 hover:border-indigo-500/40 text-slate-300 text-[11px] border border-slate-700/60 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-cake-candles text-[9px] text-purple-400"></i> "List students born after 2005."
+          </button>
+          <button onclick="setAndAsk('Which students are in Computer Science?')" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-indigo-950/60 hover:border-indigo-500/40 text-slate-300 text-[11px] border border-slate-700/60 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-laptop-code text-[9px] text-cyan-400"></i> "Which students are in Computer Science?"
+          </button>
+        </div>
+
+        <!-- AI Output Box -->
+        <div id="aiResult" class="hidden mt-4 p-4 rounded-2xl bg-slate-900/90 border border-indigo-500/30">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-800 text-[11px]">
+            <div class="flex items-center gap-2">
+              <span id="aiModelBadge" class="font-mono text-indigo-400 font-semibold"></span>
+              <span id="aiRecordsBadge" class="text-slate-400"></span>
+            </div>
+            <span class="text-[10px] text-emerald-400 flex items-center gap-1">
+              <i class="fa-solid fa-circle-check"></i> Answer Grounded in Records
+            </span>
+          </div>
+          <div id="aiText" class="text-sm text-slate-100 leading-relaxed font-normal"></div>
+          <div id="aiTip" class="text-[11px] text-indigo-300/80 mt-2.5 pt-2 border-t border-slate-800/60 flex items-center gap-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Student Records Table Section -->
+      <div class="glass-panel rounded-3xl overflow-hidden border border-slate-800">
+        <!-- Table Toolbar & Filters -->
+        <div class="p-5 border-b border-slate-800/90 flex flex-col md:flex-row gap-3 md:items-center md:justify-between bg-slate-900/40">
+          <div class="flex flex-wrap gap-2.5 items-center flex-1">
+            <!-- Search by Name -->
+            <div class="relative w-full sm:w-64">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input
+                id="filterName"
+                oninput="debouncedFetch()"
+                type="text"
+                placeholder="Search student by name..."
+                class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+
+            <!-- Course Filter -->
+            <select id="filterCourse" onchange="fetchStudents()" class="px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+              <option value="">All Courses</option>
+            </select>
+
+            <!-- Born After Filter -->
+            <div class="flex items-center gap-1.5 bg-slate-900/90 px-3 py-1 rounded-xl border border-slate-700/80 text-xs text-slate-400">
+              <span class="text-[10px] uppercase font-bold tracking-wider">Born After:</span>
+              <input
+                id="filterBornAfter"
+                onchange="fetchStudents()"
+                type="date"
+                class="bg-transparent text-slate-200 text-xs focus:outline-none"
+              />
+            </div>
+
+            <!-- Reset Button -->
+            <button onclick="resetFilters()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition border border-slate-700">
+              Reset
+            </button>
+          </div>
+
+          <!-- Counter indicator -->
+          <div class="text-xs text-slate-400">
+            Displaying <span id="displayedCount" class="font-bold text-indigo-400">0</span> of <span id="totalCount" class="font-bold text-white">0</span> records
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-900/60">
+                <th class="py-3.5 px-5">Student ID</th>
+                <th class="py-3.5 px-5">Student Name</th>
+                <th class="py-3.5 px-5">Enrolled Course</th>
+                <th class="py-3.5 px-5">Birth Date</th>
+                <th class="py-3.5 px-5">Contact Info</th>
+                <th class="py-3.5 px-5">Location</th>
+                <th class="py-3.5 px-5 text-center">Manage</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody" class="divide-y divide-slate-800/50 text-xs">
+              <tr>
+                <td colspan="7" class="py-12 text-center text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin text-indigo-400 mr-2"></i> Loading database records...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-panel border-t border-slate-800/80 py-4 mt-auto">
+      <div class="max-w-7xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <p>Students Database CRUD Application (+ Optional Ollama AI Extension)</p>
+        <p class="font-mono text-[11px] text-slate-400">Python 3.14 • FastAPI • SQLite3</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Add / Edit Student Modal Dialog -->
+  <div id="studentModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-700/80 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3.5 mb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-user-pen"></i>
+          </div>
+          <h3 id="modalTitle" class="text-base font-bold text-white">Add New Student</h3>
+        </div>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Student Form -->
+      <form id="studentForm" onsubmit="saveStudent(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editStudentId" />
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Student ID (Optional)</label>
+            <input id="formStudentId" type="text" placeholder="Auto-generated if empty" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Full Name *</label>
+            <input id="formName" type="text" required placeholder="e.g. Aarav Sharma" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Date of Birth *</label>
+            <input id="formDob" type="date" required class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Course / Major</label>
+            <input id="formCourse" type="text" placeholder="e.g. Computer Science" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Email Address *</label>
+            <input id="formEmail" type="email" required placeholder="name@example.edu" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Phone Number</label>
+            <input id="formPhone" type="text" placeholder="+91-9876543210" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Residential Address / City</label>
+          <input id="formAddress" type="text" placeholder="e.g. Mumbai, Maharashtra" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Enrollment Date</label>
+          <input id="formEnrollmentDate" type="date" class="w-full px-3 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <div id="formError" class="hidden p-3 rounded-xl bg-red-950/50 border border-red-500/40 text-red-400 text-xs font-medium"></div>
+
+        <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">
+            Cancel
+          </button>
+          <button type="submit" id="saveBtn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition shadow-lg shadow-indigo-600/30">
+            Save Record
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- KPI Details Interactive Modal Dialog -->
+  <div id="kpiModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 shadow-2xl relative border border-slate-700/80 max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3.5 mb-4 shrink-0">
+        <div class="flex items-center gap-3">
+          <div id="kpiModalIcon" class="w-9 h-9 rounded-xl flex items-center justify-center text-base">
+            <i class="fa-solid fa-circle-info"></i>
+          </div>
+          <div>
+            <h3 id="kpiModalTitle" class="text-base font-bold text-white">KPI Details</h3>
+            <p id="kpiModalSubtitle" class="text-xs text-slate-400">Detailed metrics breakdown</p>
+          </div>
+        </div>
+        <button onclick="closeKpiModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div id="kpiModalBody" class="space-y-4 text-xs overflow-y-auto pr-1">
+        <!-- Content injected dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-2.5 pt-4 mt-4 border-t border-slate-800 shrink-0">
+        <button onclick="closeKpiModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Background Particles Script -->
+  <script>
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 120 };
+
+    function initCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      particles = [];
+      const particleCount = Math.floor((width * height) / 16000);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          radius: Math.random() * 1.6 + 0.6,
+          color: Math.random() > 0.4 ? 'rgba(99, 102, 241, ' : 'rgba(168, 85, 247, '
+        });
+      }
+    }
+
+    window.addEventListener('resize', initCanvas);
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.x;
+      mouse.y = e.y;
+    });
+    window.addEventListener('mouseout', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    function renderParticles() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        // Draw particle node
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + '0.7)';
+        ctx.fill();
+
+        // Connect nearby particles
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 110) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(99, 102, 241, ${0.18 * (1 - dist / 110)})`;
+            ctx.lineWidth = 0.7;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+
+        // Mouse interaction attraction
+        if (mouse.x !== null) {
+          const mdx = p.x - mouse.x;
+          const mdy = p.y - mouse.y;
+          const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (mdist < mouse.radius) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(168, 85, 247, ${0.35 * (1 - mdist / mouse.radius)})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(renderParticles);
+    }
+
+    initCanvas();
+    renderParticles();
+  </script>
+
+  <!-- CRUD and AI Logic Script -->
+  <script>
+    let debounceTimer;
+    let isEditing = false;
+
+    function debouncedFetch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fetchStudents, 250);
+    }
+
+    async function checkAIStatus() {
+      try {
+        const res = await fetch('/ai/status');
+        const data = await res.json();
+        const badge = document.getElementById('aiStatusBadge');
+        if (data.ollama_available) {
+          badge.innerHTML = `<span class="text-emerald-400 font-semibold">● Live Model</span> (${data.configured_model})`;
+        } else {
+          badge.innerHTML = `<span class="text-purple-400 font-semibold">● Grounded Fallback</span>`;
+        }
+      } catch (err) {
+        document.getElementById('aiStatusBadge').innerText = 'Offline';
+      }
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/students/stats/summary');
+        const data = await res.json();
+        document.getElementById('statTotal').innerText = data.total_students;
+        const courses = Object.keys(data.courses_breakdown || {});
+        document.getElementById('statCourses').innerText = courses.length;
+
+        const courseSelect = document.getElementById('filterCourse');
+        if (courseSelect.options.length <= 1) {
+          courses.forEach(c => {
+            if (c !== 'Unassigned') {
+              const opt = document.createElement('option');
+              opt.value = c;
+              opt.innerText = c;
+              courseSelect.appendChild(opt);
+            }
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function fetchStudents() {
+      const name = document.getElementById('filterName').value.trim();
+      const course = document.getElementById('filterCourse').value;
+      const bornAfter = document.getElementById('filterBornAfter').value;
+
+      let url = '/students?limit=100';
+      if (name) url += `&name=${encodeURIComponent(name)}`;
+      if (course) url += `&course=${encodeURIComponent(course)}`;
+      if (bornAfter) url += `&born_after=${encodeURIComponent(bornAfter)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        renderTable(data.items || []);
+        document.getElementById('displayedCount').innerText = (data.items || []).length;
+        document.getElementById('totalCount').innerText = data.total;
+      } catch (err) {
+        document.getElementById('studentTableBody').innerHTML = `
+          <tr><td colspan="7" class="py-8 text-center text-red-400">Failed to load student records from database.</td></tr>
+        `;
+      }
+    }
+
+    function renderTable(students) {
+      const tbody = document.getElementById('studentTableBody');
+      if (!students.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="7" class="py-12 text-center text-slate-500">No student records match your query.</td></tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = students.map(s => `
+        <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+          <td class="py-3.5 px-5 font-mono font-bold text-indigo-400">${s.student_id}</td>
+          <td class="py-3.5 px-5 font-semibold text-slate-100">${s.name}</td>
+          <td class="py-3.5 px-5">
+            <span class="px-2.5 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-slate-300 text-[11px] font-medium inline-block">
+              ${s.course || 'Unassigned'}
+            </span>
+          </td>
+          <td class="py-3.5 px-5 text-slate-300 font-mono text-[11px]">${s.date_of_birth}</td>
+          <td class="py-3.5 px-5 text-slate-300">
+            <div class="flex items-center gap-1.5"><i class="fa-regular fa-envelope text-[10px] text-slate-500"></i>${s.email}</div>
+            ${s.phone ? `<div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5"><i class="fa-solid fa-phone text-[9px] text-slate-500"></i>${s.phone}</div>` : ''}
+          </td>
+          <td class="py-3.5 px-5 text-slate-400">${s.address || '—'}</td>
+          <td class="py-3.5 px-5 text-center">
+            <div class="flex items-center justify-center gap-2">
+              <button onclick="editStudent('${s.student_id}')" title="Edit Student Details" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-indigo-600/30 text-indigo-400 border border-slate-700 flex items-center justify-center transition">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+              <button onclick="deleteStudent('${s.student_id}', '${s.name}')" title="Delete Student" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-red-600/30 text-red-400 border border-slate-700 flex items-center justify-center transition">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function resetFilters() {
+      document.getElementById('filterName').value = '';
+      document.getElementById('filterCourse').value = '';
+      document.getElementById('filterBornAfter').value = '';
+      fetchStudents();
+    }
+
+    function openModal() {
+      isEditing = false;
+      document.getElementById('modalTitle').innerText = 'Add New Student';
+      document.getElementById('studentForm').reset();
+      document.getElementById('editStudentId').value = '';
+      document.getElementById('formStudentId').disabled = false;
+      document.getElementById('formEnrollmentDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('formError').classList.add('hidden');
+      document.getElementById('studentModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('studentModal').classList.add('hidden');
+    }
+
+    async function editStudent(sid) {
+      try {
+        const res = await fetch(`/students/${sid}`);
+        if (!res.ok) throw new Error('Failed to load student details');
+        const s = await res.json();
+
+        isEditing = true;
+        document.getElementById('modalTitle').innerText = `Edit Student: ${s.student_id}`;
+        document.getElementById('editStudentId').value = s.student_id;
+        document.getElementById('formStudentId').value = s.student_id;
+        document.getElementById('formStudentId').disabled = true;
+        document.getElementById('formName').value = s.name;
+        document.getElementById('formDob').value = s.date_of_birth;
+        document.getElementById('formEmail').value = s.email;
+        document.getElementById('formPhone').value = s.phone || '';
+        document.getElementById('formCourse').value = s.course || '';
+        document.getElementById('formAddress').value = s.address || '';
+        document.getElementById('formEnrollmentDate').value = s.enrollment_date || '';
+        document.getElementById('formError').classList.add('hidden');
+        document.getElementById('studentModal').classList.remove('hidden');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function saveStudent(e) {
+      e.preventDefault();
+      const errorBox = document.getElementById('formError');
+      errorBox.classList.add('hidden');
+
+      const payload = {
+        name: document.getElementById('formName').value.trim(),
+        date_of_birth: document.getElementById('formDob').value,
+        email: document.getElementById('formEmail').value.trim(),
+        phone: document.getElementById('formPhone').value.trim() || null,
+        course: document.getElementById('formCourse').value.trim() || null,
+        address: document.getElementById('formAddress').value.trim() || null,
+        enrollment_date: document.getElementById('formEnrollmentDate').value || null
+      };
+
+      try {
+        let res;
+        if (isEditing) {
+          const sid = document.getElementById('editStudentId').value;
+          res = await fetch(`/students/${sid}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          const customSid = document.getElementById('formStudentId').value.trim();
+          if (customSid) payload.student_id = customSid;
+          res = await fetch('/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Error saving student');
+        }
+
+        closeModal();
+        fetchStudents();
+        fetchStats();
+      } catch (err) {
+        errorBox.innerText = err.message;
+        errorBox.classList.remove('hidden');
+      }
+    }
+
+    async function deleteStudent(sid, name) {
+      if (!confirm(`Are you sure you want to delete student "${name}" (${sid})?`)) return;
+      try {
+        const res = await fetch(`/students/${sid}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to delete student');
+        fetchStudents();
+        fetchStats();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function setAndAsk(question) {
+      document.getElementById('aiInput').value = question;
+      askAI(new Event('submit'));
+    }
+
+    async function askAI(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('aiInput');
+      const q = input.value.trim();
+      if (!q) return;
+
+      const btn = document.getElementById('aiBtn');
+      const resultBox = document.getElementById('aiResult');
+      const textElem = document.getElementById('aiText');
+      const modelBadge = document.getElementById('aiModelBadge');
+      const recordsBadge = document.getElementById('aiRecordsBadge');
+      const tipElem = document.getElementById('aiTip');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
+      resultBox.classList.remove('hidden');
+      textElem.innerHTML = '<span class="text-slate-400">Querying database records and grounding answer...</span>';
+      modelBadge.innerText = '';
+      recordsBadge.innerText = '';
+      tipElem.innerText = '';
+
+      try {
+        const res = await fetch('/ai/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q })
+        });
+        const data = await res.json();
+        textElem.innerText = data.answer;
+        modelBadge.innerText = `Engine: ${data.model_used}`;
+        recordsBadge.innerText = `Referenced ${data.grounded_records_count} record(s)`;
+        if (data.tip) {
+          tipElem.innerHTML = `<i class="fa-regular fa-lightbulb text-amber-400"></i> ${data.tip}`;
+        }
+      } catch (err) {
+        textElem.innerText = `Error contacting AI service: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Query Database</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+      }
+    }
+
+    // KPI Modal Handlers
+    function closeKpiModal() {
+      document.getElementById('kpiModal').classList.add('hidden');
+    }
+
+    async function openKpiModal(type) {
+      const modal = document.getElementById('kpiModal');
+      const icon = document.getElementById('kpiModalIcon');
+      const title = document.getElementById('kpiModalTitle');
+      const subtitle = document.getElementById('kpiModalSubtitle');
+      const body = document.getElementById('kpiModalBody');
+
+      modal.classList.remove('hidden');
+      body.innerHTML = '<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-indigo-400 mr-2"></i> Loading metrics...</div>';
+
+      if (type === 'students') {
+        icon.className = 'w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-base';
+        icon.innerHTML = '<i class="fa-solid fa-users"></i>';
+        title.innerText = 'Total Enrolled Students';
+        subtitle.innerText = 'Live registry overview & recent students';
+
+        try {
+          const res = await fetch('/students?limit=100');
+          const data = await res.json();
+          const items = data.items || [];
+
+          body.innerHTML = `
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Total Students</p>
+                <h4 class="text-xl font-extrabold text-white mt-0.5">${data.total}</h4>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Persistence</p>
+                <h4 class="text-xs font-semibold text-emerald-400 mt-1.5"><i class="fa-solid fa-database mr-1"></i> SQLite Active</h4>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Registry Status</p>
+                <h4 class="text-xs font-semibold text-indigo-400 mt-1.5">Synchronized</h4>
+              </div>
+            </div>
+
+            <h4 class="text-xs font-bold text-slate-300 mb-2">Registered Students Roster (${items.length}):</h4>
+            <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+              ${items.map(s => `
+                <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/80 flex items-center justify-between hover:border-slate-700 transition">
+                  <div>
+                    <span class="font-mono text-indigo-400 font-bold text-[11px] mr-2">${s.student_id}</span>
+                    <span class="font-semibold text-slate-200">${s.name}</span>
+                    <span class="text-slate-500 text-[11px] ml-2">(${s.course || 'Unassigned'})</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 font-mono">${s.email}</div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } catch (e) {
+          body.innerHTML = `<div class="text-red-400 py-4">Error loading student records: ${e.message}</div>`;
+        }
+
+      } else if (type === 'courses') {
+        icon.className = 'w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-base';
+        icon.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
+        title.innerText = 'Active Academic Courses';
+        subtitle.innerText = 'Student enrollment distribution by major';
+
+        try {
+          const res = await fetch('/students/stats/summary');
+          const data = await res.json();
+          const breakdown = data.courses_breakdown || {};
+          const total = data.total_students || 1;
+          const entries = Object.entries(breakdown);
+
+          body.innerHTML = `
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 mb-4 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Total Enrolled Majors</p>
+                <h4 class="text-xl font-extrabold text-white mt-0.5">${entries.length} Programs</h4>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Overall Cohort</p>
+                <h4 class="text-base font-extrabold text-purple-400 mt-0.5">${total} Students</h4>
+              </div>
+            </div>
+
+            <h4 class="text-xs font-bold text-slate-300 mb-2">Enrollment Breakdown:</h4>
+            <div class="space-y-3">
+              ${entries.map(([course, count]) => {
+                const pct = Math.round((count / total) * 100);
+                return `
+                  <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-bold text-slate-200 text-xs">${course}</span>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-semibold text-purple-300">${count} student(s) (${pct}%)</span>
+                        <button onclick="filterByCourseAndClose('${course}')" class="px-2 py-0.5 rounded bg-purple-600/30 hover:bg-purple-600 text-purple-200 text-[10px] font-bold transition">
+                          Filter Table
+                        </button>
+                      </div>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        } catch (e) {
+          body.innerHTML = `<div class="text-red-400 py-4">Error loading course breakdown: ${e.message}</div>`;
+        }
+
+      } else if (type === 'server') {
+        icon.className = 'w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base';
+        icon.innerHTML = '<i class="fa-solid fa-server"></i>';
+        title.innerText = 'FastAPI Live Backend Architecture';
+        subtitle.innerText = 'High-performance ASGI runtime & persistence engine';
+
+        body.innerHTML = `
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+              <p class="text-[10px] uppercase text-slate-400 font-bold">API Framework</p>
+              <h4 class="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt text-emerald-400"></i> FastAPI 0.115+ (ASGI)
+              </h4>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+              <p class="text-[10px] uppercase text-slate-400 font-bold">Storage Engine</p>
+              <h4 class="text-sm font-bold text-white mt-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-database text-indigo-400"></i> SQLite + SQLAlchemy 2.0
+              </h4>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 mb-4">
+            <h4 class="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-network-wired text-emerald-400"></i> Available API Endpoints
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-mono text-[11px] text-slate-300">
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">POST</span> /students</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold">GET</span> /students</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold">GET</span> /students/{id}</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-bold">PUT</span> /students/{id}</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[9px] font-bold">PATCH</span> /students/{id}</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 text-[9px] font-bold">DEL</span> /students/{id}</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">POST</span> /ai/ask</div>
+              <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold">GET</span> /ai/status</div>
+            </div>
+          </div>
+
+          <div class="flex gap-2.5">
+            <a href="/docs" target="_blank" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-center transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-code"></i> Open Swagger UI
+            </a>
+            <a href="/redoc" target="_blank" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-center transition flex items-center justify-center gap-1.5 border border-slate-700">
+              <i class="fa-solid fa-book"></i> Open ReDoc Spec
+            </a>
+          </div>
+        `;
+
+      } else if (type === 'ai') {
+        icon.className = 'w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-base';
+        icon.innerHTML = '<i class="fa-solid fa-brain"></i>';
+        title.innerText = 'Local AI & Ollama Integration';
+        subtitle.innerText = 'Natural language database interface diagnostics';
+
+        try {
+          const res = await fetch('/ai/status');
+          const data = await res.json();
+
+          body.innerHTML = `
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 mb-4 flex items-center justify-between">
+              <div>
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Connection Status</p>
+                <h4 class="text-sm font-bold mt-0.5 ${data.ollama_available ? 'text-emerald-400' : 'text-purple-400'}">
+                  ${data.ollama_available ? '● Ollama Online' : '● Grounded Fallback Mode Active'}
+                </h4>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] uppercase text-slate-400 font-bold">Model</p>
+                <h4 class="font-mono text-cyan-400 font-bold">${data.configured_model}</h4>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 mb-4">
+              <h4 class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-cyan-400"></i> Security & Grounding Policy
+              </h4>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                The model is <strong>strictly prohibited</strong> from executing arbitrary or unrestricted SQL. Backend code retrieves safe student entity summaries via SQLAlchemy ORM and feeds them directly as factual grounding context into the prompt.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-indigo-200 text-xs mb-4">
+              <p class="font-bold mb-1">To run local AI model:</p>
+              <code class="block font-mono bg-black/50 p-2 rounded-lg text-emerald-300 text-[11px]">ollama run ${data.configured_model}</code>
+            </div>
+
+            <button onclick="testAiPromptFromModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold transition flex items-center justify-center gap-2 shadow-lg">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Test AI Question Prompt Now
+            </button>
+          `;
+        } catch (e) {
+          body.innerHTML = `<div class="text-red-400 py-4">Error loading AI diagnostics: ${e.message}</div>`;
+        }
+      }
+    }
+
+    function filterByCourseAndClose(courseName) {
+      closeKpiModal();
+      document.getElementById('filterCourse').value = courseName;
+      fetchStudents();
+    }
+
+    function testAiPromptFromModal() {
+      closeKpiModal();
+      const input = document.getElementById('aiInput');
+      input.scrollIntoView({ behavior: 'smooth' });
+      setAndAsk('List students born after 2005.');
+    }
+
+    // Initialize data
+    fetchStudents();
+    fetchStats();
+    checkAIStatus();
+  </script>
+</body>
+</html>
