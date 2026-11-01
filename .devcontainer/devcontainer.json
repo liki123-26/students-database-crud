@@ -1,0 +1,13 @@
+{
+  "name": "Students Database CRUD Studio",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Students CRUD App",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt && python seed_data.py",
+  "postStartCommand": "nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &"
+}
